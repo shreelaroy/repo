@@ -1,0 +1,15 @@
+---
+- hosts: "{{ host_for_passwd }}"
+  vars_files:
+    - /home/ec2-user/auto/repo/credentials.yml
+    - /home/ec2-user/auto/repo/username.yml
+    - /home/ec2-user/auto/repo/hostname.yml
+
+  vars:
+    password: "{{ my_default_password }}"
+    username: "{{ user_name }}"
+
+
+  tasks:
+  - name: Change user password
+    user: name={{ user_name }} update_password=always password={{ password }}
