@@ -1,0 +1,9 @@
+---
+- hosts: all
+  user: root
+  vars_files: ['credentials.yml']
+  vars:
+    password: "{{ my_default_password }}"
+
+  tasks:
+    - user: name=user1 password={{password}} groups=iac_client1
