@@ -1,5 +1,6 @@
 ---
 - hosts: "{{ host_for_passwd }}"
+  become: true
   vars_files:
     - /iac/repo/scripts/credentials_pwreset.yml 
     - /iac/repo/scripts/hostname_pwreset.yml
