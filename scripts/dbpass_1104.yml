@@ -1,0 +1,6 @@
+---
+
+- name: password check
+  hosts: db_servers
+  roles:
+    - dbpass_with_module
