@@ -62,4 +62,4 @@ sudo git add *
 
 sudo git commit -m " For user: $mailid"
 
-git commit origin master
+git push origin master
