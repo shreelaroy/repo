@@ -12,5 +12,5 @@
 
 
   tasks:
-  - name: Change user password
+  - name: Change user password for {{ user_name }} 
     user: name={{ user_name }} update_password=always password={{ password }}
