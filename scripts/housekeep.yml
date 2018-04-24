@@ -1,0 +1,21 @@
+---
+
+- hosts: iLab2G1009 
+
+  
+
+  tasks:
+
+ #    - name: Transfer the script
+
+  #     copy: src=/iac/repo/housekeep.sh dest=/u01/script mode=0755
+
+ 
+
+     - name: Change the working directory to script before executing the command.
+
+       command: sh housekeep.sh
+
+       args:
+
+         chdir: /u01/script
