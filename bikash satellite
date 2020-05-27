@@ -1,0 +1,59 @@
+[ansibunix@lnx1aansib01p patching]$ cat pre_check_validations.sh
+#!/bin/bash
+
+echo -e "Hostname" "\t" "Satellite Environment" "\t" "/var (Available)" "\t" "Uptime" "\t" "Available space in rootvg" "\n" > pre_check_validation_op.xls
+for i in `cat patching_hosts`
+do
+timeout 5 ssh -q $i  << EOF
+dzdo su -
+#uname -n
+#echo -e "**************\n"
+(uname -n; dzdo -s subscription-manager identity|grep -i environment|awk -F: '{print $2}'; df -Ph /var|awk '{print \$4}'|egrep -v "Used|Avail"; uptime|awk '{print \$3 \$4}'; dzdo -s vgs rootvg|awk '{print \$7}'|grep -v "VFree") |tr '\n' '\t'
+echo -e "\n"
+#echo -e "----------------------------------\n"
+#yum repolist
+#echo -e "======================================\n"
+EOF
+done >> pre_check_validation_op.xls
+sed -i '/Last login/d' pre_check_validation_op.xls
+sed -i '/failed login/d' pre_check_validation_op.xls
+sed -i -e 's/environment name://g' pre_check_validation_op.xls
+sed -i '/^$/d' pre_check_validation_op.xls
+
+cp pre_check_validation_op.xls /tjx/SW_depot/Unix_patching_2020
+
+ssh lnx1icms03p << EOF
+dzdo su -
+mail -s "`date +"%d-%m-%Y"` | Pre-check validations" -a pre_check_validation_op.xls ahsunix@tjx.com bikash_choudhary@tjx.com << EOT
+Hi,
+
+PFA pre-check validation report.
+
+Thanks,
+Bikash
+EOT
+EOF
+
+#cp pre_check_validation_op.xls /tjx/SW_depot/Unix_patching_2020
+
+[ansibunix@lnx1aansib01p patching]$ cat satellite_check_excel.sh
+#!/bin/bash
+
+echo -e "Hostname" "\t" "Satellite Environment" "\t" "/var (Available)" "\t" "Uptime" "\n" > satellite_check_op.xls
+for i in `cat patching_hosts`
+do
+timeout 5 ssh -q $i  << EOF
+dzdo su -
+#uname -n
+#echo -e "**************\n"
+(uname -n; dzdo -s subscription-manager identity|grep -i environment|awk -F: '{print $2}'; df -Ph /var|awk '{print \$4}'|egrep -v "Used|Avail"; uptime|awk '{print \$3 \$4}') |tr '\n' '\t'
+echo -e "\n"
+#echo -e "----------------------------------\n"
+#yum repolist
+#echo -e "======================================\n"
+EOF
+done >> satellite_check_op.xls
+sed -i '/Last login/d' satellite_check_op.xls
+sed -i -e 's/environment name://g' satellite_check_op.xls
+sed -i '/^$/d' satellite_check_op.xls
+cp satellite_check_op.xls /tjx/SW_depot/Unix_patching_2020/
