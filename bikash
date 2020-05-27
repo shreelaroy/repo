@@ -1,0 +1,88 @@
+[ansibunix@lnx1aansib01p patching]$ cat pre_patch_backup.sh
+#/bin/bash
+for i in `cat patching_hosts`
+do
+timeout 60 ssh $i << EOF
+dzdo su -
+uname -n
+echo -e "=====================\n"
+#dzdo -s netstat -rn > /tmp/"netstat_pre-patch."`date +"%d-%m-%Y"`
+#dzdo -s cp /etc/mtab /etc/"mtab_pre-patch."`date +"%d-%m-%Y"`
+#dzdo -s chmod 755 /etc/"mtab_pre-patch."`date +"%d-%m-%Y"`
+#ls -l /tmp/"netstat_pre-patch."`date +"%d-%m-%Y"`
+#ls -l /etc/"mtab_pre-patch."`date +"%d-%m-%Y"`
+
+dzdo -s netstat -rn > /tmp/netstat_pre-patch_q1_bkp
+dzdo -s cp /etc/mtab /etc/mtab_pre-patch_q1_bkp
+dzdo -s chmod 755 /etc/mtab_pre-patch_q1_bkp
+ls -l /tmp/netstat_pre-patch_q1_bkp
+ls -l /etc/mtab_pre-patch_q1_bkp
+echo -e "==========================================\n"
+EOF
+done
+[ansibunix@lnx1aansib01p patching]$ cat pre_post_diff.sh
+#/bin/bash
+for i in `cat patching_hosts`
+do
+timeout 25 ssh $i << EOF
+echo -e "=========================================================================\n"
+dzdo su -
+
+#pre="/etc/mtab_pre-patch.12-02-2020"
+#post="/etc/mtab"
+#pre_op="/etc/mtab_pre_op"
+#post_op="/etc/mtab_post_op"
+
+uname -n
+echo -e "-------------\n"
+uptime
+#rm -f netstat_post-patch.12-02-2020
+#rm -f /tmp/netstat_post-patch.12-02-2020
+
+echo -e "--------------------\n"
+cat /etc/mtab|awk -F' ' '{print \$2}' > /etc/mtab_post_op
+#cat /etc/mtab_pre-patch.26-02-2020|awk -F' ' '{print \$2}' > /etc/mtab_pre_op
+
+cat /etc/mtab_pre-patch_q1_bkp|awk -F' ' '{print \$2}' > /etc/mtab_pre_op
+
+netstat -rn > /tmp/"netstat_post-patch."`date +%d-%m-%y`
+
+#awk -F' ' '{print $2}' "$post"  > "$post_op"
+#awk -F' ' '{print $2}' "$pre" > "$pre_op"
+
+chmod 755 /etc/mtab_post_op
+chmod 755 /etc/mtab_pre_op
+
+echo -e "Filesystem missing before patching:\n"
+grep -F -x -v -f /etc/mtab_pre_op /etc/mtab_post_op
+echo -e "--------------------\n"
+echo -e "Filesystem missing after patching:\n"
+grep -F -x -v -f /etc/mtab_post_op /etc/mtab_pre_op
+
+echo -e "--------------------------------------------------\n"
+
+echo -e "Difference in route-table post patching:\n"
+#diff /tmp/netstat_pre-patch.26-02-2020 /tmp/"netstat_post-patch."`date +%d-%m-%y`
+
+diff /tmp/netstat_pre-patch_q1_bkp /tmp/"netstat_post-patch."`date +%d-%m-%y`
+
+echo -e "=========================================================================\n"
+
+rm -f /tmp/"netstat_post-patch."`date +%d-%m-%y`
+rm -f /etc/mtab_post_op /etc/mtab_pre_op
+rm -f mtab_post_op mtab_pre_op
+EOF
+done > "pre_post_diff_op_"`date +%d-%m-%y`.txt
+
+echo -e "\n"
+echo -e "Original report location: /tjx/SW_depot/Unix_patching_2020/ \n" >> "pre_post_diff_op_"`date +%d-%m-%y`.txt
+cp "pre_post_diff_op_"`date +%d-%m-%y`.txt /tjx/SW_depot/Unix_patching_2020/
+mv "pre_post_diff_op_"`date +%d-%m-%y`.txt reports/
+
+ssh lnx1icms03p << EOF
+
+dzdo su -
+
+mail -s "Difference in mtab and route-table after server patching | `date +%d-%m-%y`" -a /tjx/SW_depot/Unix_patching_2020/"pre_post_diff_op_"`date +%d-%m-%y`.txt bikash_choudhary@tjx.com ahsunix@tjx.com < /tjx/SW_depot/Unix_patching_2020/"pre_post_diff_op_"`date +%d-%m-%y`.txt
+
+EOF
